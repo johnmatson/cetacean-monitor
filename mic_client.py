@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
+import numpy
 import pyaudio
 import socket
 import sys
+
+
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
