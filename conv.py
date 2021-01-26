@@ -112,7 +112,7 @@ if __name__ == "__main__":
     model = build_model(input_shape)
 
     #compile network 
-    optimizer = keras.optimerz.Adam(learning_rate = 0.0001)
+    optimizer = keras.optimizer.Adam(learning_rate = 0.0001)
     model.compile(optimizer=optimizer, loss="sparce_categorical_crossentropy",metrics=['accuracy'])
 
     #train the CNN
