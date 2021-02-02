@@ -5,18 +5,18 @@ import tensorflow.keras as keras
 
 DATA_PATH = ""
 
-"""
-loads datasets from json file
 
-param:
-data_path(str): path to json file 
-
-return:
-x(ndarray): inputs
-y(ndarray): outputs/targets
-"""
 def load_data(data_path):
+    """
+    loads datasets from json file
 
+    param:
+    data_path(str): path to json file 
+
+    return:
+    x(ndarray): inputs
+    y(ndarray): outputs/targets
+    """
 
     with open(data_path,"r") as fp:
         data = json.load(fp)
@@ -25,6 +25,8 @@ def load_data(data_path):
     y = np.array(data["labels"])
     return x, y
 
+
+def prep_datasets(test_size, valid_size):
     """
     splits loaded datasets into train, validation and test sets for building model
 
@@ -35,7 +37,7 @@ def load_data(data_path):
     return:
     train, valid and test data sets split evenly
     """
-def prep_datasets(test_size, valid_size):
+
     #load data
     x, y = load_data(DATA_PATH)
     
@@ -52,13 +54,15 @@ def prep_datasets(test_size, valid_size):
 
     return x_train, x_valid, x_test, y_train, y_valid, y_test
 
+
+def build_model(input_shape):
     """
     builds model of CNN
 
     param:
     input_shape: shape of the model 
     """
-def build_model(input_shape):
+
     #create model
     model = keras.Sequential()
 
@@ -78,22 +82,26 @@ def build_model(input_shape):
     model.add(keras.layers.BatchNormalization())
 
     #flatten the output and feed it into dense layer
-    model.add(keras.layers.flatten())
-    model.add(keras.layers.dense(64, activation = 'relu'))
+    model.add(keras.layers.Flatten())
+    model.add(keras.layers.Dense(64, activation = 'relu'))
     model.add(keras.layers.Dropout(0.3))
 
     #output layer
     model.add(keras.layers.Dense(1,activation='softmax'))
 
-    """
-    predicts output from a given data set against trained set
+    return model
 
-    param:
-    model: model of CNN
-    x: x data set
-    y: y data set
-    """
+
 # def predict(model, x, y):
+#     """
+#     predicts output from a given data set against trained set
+
+#     param:
+#     model: model of CNN
+#     x: x data set
+#     y: y data set
+#     """
+
 #     x = x[np.newaxis,...]
     
 #     prediction = model.predict(x)
@@ -112,7 +120,7 @@ if __name__ == "__main__":
     model = build_model(input_shape)
 
     #compile network 
-    optimizer = keras.optimizer.Adam(learning_rate = 0.0001)
+    optimizer = keras.optimizers.Adam(learning_rate = 0.0001)
     model.compile(optimizer=optimizer, loss="sparce_categorical_crossentropy",metrics=['accuracy'])
 
     #train the CNN
