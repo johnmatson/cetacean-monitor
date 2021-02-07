@@ -11,7 +11,7 @@ SAMPLES_PER_TRACK = SAMPLE_RATE * TRACK_DURATION
 
 
 def save_mfcc(dataset_path, json_path, num_mfcc=13, n_fft=2048, hop_length=512, num_segments=5):
-    """Extracts MFCCs from music dataset and saves them into a json file along with genre labels.
+    """Extracts MFCCs from dataset and saves them into a json file along with labels.
         :param dataset_path (str): Path to dataset
         :param json_path (str): Path to json file used to save MFCCs
         :param num_mfcc (int): Number of coefficients to extract

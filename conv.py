@@ -2,6 +2,11 @@ import json
 import numpy as np
 from sklearn.model_selection import train_test_split
 import tensorflow.keras as keras
+import tensorflow as tf
+
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
+config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 DATA_PATH = "datasets/data.json"
 
@@ -92,23 +97,23 @@ def build_model(input_shape):
     return model
 
 
-# def predict(model, x, y):
-#     """
-#     predicts output from a given data set against trained set
+def predict(model, x, y):
+    """
+    predicts output from a given data set against trained set
 
-#     param:
-#     model: model of CNN
-#     x: x data set
-#     y: y data set
-#     """
+    param:
+    model: model of CNN
+    x: x data set
+    y: y data set
+    """
 
-#     x = x[np.newaxis,...]
+    x = x[np.newaxis,...]
     
-#     prediction = model.predict(x)
+    prediction = model.predict(x)
 
-#     #extract index with max value
-#     pred_index = np.argmax(prediction, axis=1) 
-#     print("Expected index: {}, Predicted index: {}".format(y, pred_index))
+    #extract index with max value
+    pred_index = np.argmax(prediction, axis=1) 
+    print("Expected index: {}, Predicted index: {}".format(y, pred_index))
 
 
 if __name__ == "__main__":
@@ -121,7 +126,7 @@ if __name__ == "__main__":
 
     #compile network 
     optimizer = keras.optimizers.Adam(learning_rate = 0.0001)
-    model.compile(optimizer=optimizer, loss="sparce_categorical_crossentropy",metrics=['accuracy'])
+    model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy",metrics=['accuracy'])
 
     #train the CNN
     model.fit(x_train,y_train, validation_data=(x_valid,y_valid),batch_size =32, epochs=30)
@@ -130,11 +135,11 @@ if __name__ == "__main__":
     test_error, test_accuracy = model.evaluate(x_test, y_test, verbose=1)
     print("Accuracy on test set is: {}".format(test_accuracy))
 
-    # #make prediction on a sample
-    # x = x_test[100]
-    # y = y_test[100]
+    #make prediction on a sample
+    x = x_test[100]
+    y = y_test[100]
 
-    # predict(model, x, y)
+    predict(model, x, y)
 
 
 
