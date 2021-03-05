@@ -131,6 +131,9 @@ if __name__ == "__main__":
     #train the CNN
     model.fit(x_train,y_train, validation_data=(x_valid,y_valid),batch_size =32, epochs=30)
 
+    #save the model
+    model.save('./saved_model')
+
     #evaluate the CNN on the test set
     test_error, test_accuracy = model.evaluate(x_test, y_test, verbose=1)
     print("Accuracy on test set is: {}".format(test_accuracy))
@@ -140,23 +143,3 @@ if __name__ == "__main__":
     y = y_test[100]
 
     predict(model, x, y)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
