@@ -6,7 +6,7 @@ import tensorflow as tf
 
 class Preprocess:
 
-    def __init__(self, mode='disk', audio_path='./datasets/full-clips/001A.mp3'):
+    def __init__(self, mode='disk', audio_path='app/datasets/full-clips/001A.mp3'):
 
         if mode == 'disk':
             # import file from disk

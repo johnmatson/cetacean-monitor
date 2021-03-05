@@ -6,8 +6,8 @@ import tensorflow as tf
 
 class Model:
 
-    def __init__(self, path='./saved_model'):
-        model = tf.keras.models.load_model(path)
+    def __init__(self, path='app/saved_model'):
+        model = keras.models.load_model(path)
         model.summary()
 
     def predict(self, data):
