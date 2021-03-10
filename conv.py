@@ -4,9 +4,9 @@ from sklearn.model_selection import train_test_split
 import tensorflow.keras as keras
 import tensorflow as tf
 
-# physical_devices = tf.config.experimental.list_physical_devices('GPU')
-# assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
-# config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
+config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 DATA_PATH = "datasets/data.json"
 
@@ -115,6 +115,21 @@ def predict(model, x, y):
     pred_index = np.argmax(prediction, axis=1) 
     print("Expected index: {}, Predicted index: {}".format(y, pred_index))
 
+def save_model(model):
+    """
+    saves model
+
+    param:
+    model: Final CNN model
+    """
+    # serialize model to JSON
+    model_json = model.to_json()
+    with open("model.json", "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    model.save_weights("model.h5")
+    print("Saved model to disk")
+
 
 if __name__ == "__main__":
     #create train, validation and test sets (x: inputs, y: outputs)
@@ -138,6 +153,8 @@ if __name__ == "__main__":
     #make prediction on a sample
     x = x_test[100]
     y = y_test[100]
+
+    save_model(model)
 
     predict(model, x, y)
 
