@@ -7,11 +7,19 @@ import tensorflow as tf
 class Model:
 
     def __init__(self, path='app/saved_model'):
+        '''
+        Initializes module by loading saved module parameters
+        located on disk at a location given by path variable
+        '''
         self.model = keras.models.load_model(path)
-        self.model.summary()
+        # self.model.summary()
 
-    def predict(self, data):
-        return self.model.predict(data)
+    def predict(self, clip_data):
+        '''
+        Accepts clip_data argument and uses module ML model
+        to return a prediction
+        '''
+        return self.model.predict(clip_data)
         
 
 model = Model()
