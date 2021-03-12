@@ -7,11 +7,11 @@ import tensorflow as tf
 class Model:
 
     def __init__(self, path='app/saved_model'):
-        model = keras.models.load_model(path)
-        model.summary()
+        self.model = keras.models.load_model(path)
+        self.model.summary()
 
     def predict(self, data):
-        return 0
+        return self.model.predict(data)
         
 
 model = Model()
