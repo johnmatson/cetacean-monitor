@@ -1,3 +1,8 @@
+'''
+Handles audio read, clip segmentation and preprocessing for
+CNN model.
+'''
+
 import math
 import librosa
 import numpy as np

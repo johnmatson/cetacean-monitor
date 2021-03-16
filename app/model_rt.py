@@ -1,3 +1,8 @@
+'''
+Deploys the pre-trained CNN model. Model is loaded from disk
+during initialization.
+'''
+
 import math
 import librosa
 import numpy as np
