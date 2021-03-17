@@ -9,6 +9,8 @@ import numpy as np
 import tensorflow.keras as keras
 import tensorflow as tf
 from exceptions import *
+import soundfile as sf
+
 
 class Preprocess:
 
@@ -27,8 +29,7 @@ class Preprocess:
         # configures module for disk mode
         if mode == 'disk':
             # import file from disk
-            # self.file = ...
-
+            self.file, samp_rate = sf.read("app/datasets/full-clips/001A.mp3")
             # set index to zero
             self.index = 0
 
@@ -50,10 +51,10 @@ class Preprocess:
         increments self.index, returns EndOfFileError if less
         than 1 second of audio is available
         '''
-        # self.clip = ...
+        self.clip = self.file[self.index*samp_rate:self.index*samp_rate+samp_rate]
         self.index += 1
 
-        if '''less than 1 second available''': # replace with actual logic
+        if self.index > np.floor(len(self.file)/samp_rate):
             raise EndOfFileError
 
     def process(self):
