@@ -1,4 +1,7 @@
-# define Python user-defined exceptions
+'''
+User-defined exceptions for use in cetacean-monitor project.
+'''
+
 class Error(Exception):
     '''Base class for other exceptions'''
     pass
