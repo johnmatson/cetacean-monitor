@@ -10,3 +10,4 @@ def run():
     return model.predict(data)
 
 # execute run function every ~1 second
+run()

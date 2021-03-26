@@ -26,6 +26,6 @@ class Model:
         Accepts clip_data argument and uses module ML model
         to return a prediction
         '''
-       return self.model.predict(data)
+        return self.model.predict(clip_data)
 
 model = Model()
