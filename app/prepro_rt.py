@@ -82,9 +82,5 @@ class Preprocess:
 
             # store only mfcc feature with expected number of vectors
             if len(mfcc) == num_mfcc_vectors_per_segment:
-                # ___FIX___ 
                 a = np.array(mfcc.tolist())
-                b,z = train_test_split(a,test_size=float(0))
-                c = b[np.newaxis,...]
-                return c
-                # ___FIX___
+                return a[np.newaxis,...,np.newaxis]
