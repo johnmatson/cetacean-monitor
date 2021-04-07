@@ -29,23 +29,20 @@ class Preprocess:
         from the disk, but at a rate much faster than real-time
         '''
 
-        # configures module for disk mode
+        # configures module to source audio from local audio file
         if mode == 'disk':
             # import file from disk
             self.file, self.samp_rate = librosa.load(audio_path)
             # set index to zero
             self.index = 0
 
-        # configures module for stream mode
+        # configures module to source audio from socket connection
         elif mode == 'stream':
+            # ADD SOCKET CODE HERE
             pass
 
-        # configures module for mic mode
+        # configures module to source audio from PC audio input
         elif mode == 'mic':
-            pass
-
-        # configures module for mic mode (might be unecessary/renundant)
-        elif mode == 'fast':
             pass
 
     def read(self):
