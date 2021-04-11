@@ -14,8 +14,8 @@ server_socket.bind(('', port)) # listen on port 5000
 server_socket.listen(5) # queue max 5 connections
 client_socket, address = server_socket.accept()
 
-print "Your IP address is: ", socket.gethostbyname(socket.gethostname())
-print "Server Waiting for client on port ", port
+print("Your IP address is: ", socket.gethostbyname(socket.gethostname()))
+print("Server Waiting for client on port ", port)
 
 while True:
 
@@ -25,9 +25,9 @@ while True:
     
 	try:
 		client_socket.sendall(stream.read(chunk))
-	except IOError,e:
+	except IOError as e:
 		if e[1] == pyaudio.paInputOverflowed: 
-			print e 
+			print(e) 
 			x = '\x00'*16*256*2 #value*format*chunk*nb_channels 
 
 stream.stop_stream()
