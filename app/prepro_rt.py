@@ -17,7 +17,7 @@ SAMPLES_PER_TRACK = SAMPLE_RATE * TRACK_DURATION
 
 class Preprocess:
 
-    def __init__(self, mode='disk', audio_path='app/datasets/full-clips/001A_lowfreq1_under10db.wav'):
+    def __init__(self, mode='disk', audio_path='app/datasets/full-clips/001A-short.wav'):
         '''
         Accepts mode argument to configure Preprocess in either
         'disk' mode, where real-time is simulated from a long-
