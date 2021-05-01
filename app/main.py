@@ -32,33 +32,44 @@ HOP_LENGTH = 512
 
 def read(clip_queue, event):
     '''
+    Continuously reads data from either DISK, STREAM or MIC. Adds
+    audio data to 'clip_queue' FIFO pipeline in 1-second segments.
+    Exits when 'event' is set.
     '''
 
     if MODE == 'DISK':
 
-        print('Audio file laoding')
+        print('Audio file laoding...')
         audio_file, fs = librosa.load(AUDIO_PATH)
-        print('Audio file loaded')
+        print('Audio file loaded.')
 
         for i in range(math.floor(len(audio_file)/SAMPLE_RATE)):
+            
             start = time.time()
+
+            # add 1 second of audio to the queue
+            clip_queue.put(audio_file[int(i*SAMPLE_RATE):int(i*SAMPLE_RATE+SAMPLE_RATE)])
+
             if event.is_set():
                 break
-            clip_queue.put(audio_file[int(i*SAMPLE_RATE):int(i*SAMPLE_RATE+SAMPLE_RATE)])
+
             end = time.time()
             time.sleep(1 - (end - start))
 
 
 def process(clip_queue, event):
     '''
+    Processes audio data from 'clip_queue' as soon as it is
+    available. MFCC is calculated for each audio clip, which is
+    fed to CNN, which makes a prediction. Exits when 'event' is
+    set.
     '''
 
-    print('CNN model loading')
+    print('CNN model loading...')
     model = keras.models.load_model(MODEL_PATH)
-    print('CNN model loaded')
+    print('CNN model loaded.')
 
-    while not event.is_set():
-    # while True:
+    while not event.is_set() or not clip_queue.empty():
 
         # extract mfcc
         clip = clip_queue.get()
@@ -67,16 +78,20 @@ def process(clip_queue, event):
         mfcc_stage3 = mfcc_stage2[np.newaxis,...,np.newaxis]
 
         # make prediction using CNN
-        prediction = model.predict(mfcc_stage3) # ADD PREDICTION TO OUTPUT CUE
+        prediction = model.predict(mfcc_stage3)
         print(np.argmax(prediction, axis=1))
 
 
 if __name__ == '__main__':
     
-    pipeline = queue.Queue(maxsize=10)
-    event = threading.Event()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+    pipeline = queue.Queue(maxsize=10) # input audio queue
+    event = threading.Event() # exit event flag
+
+    try:
+        # run read() & process() concurrently
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
         executor.submit(read, pipeline, event)
         executor.submit(process, pipeline, event)
-        # time.sleep(30)
-        # event.set()
+
+    except KeyboardInterrupt:
+        event.set()
