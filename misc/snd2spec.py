@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 
-audio_test = "audio_test.wav"
+audio_test = "T:/Repositories/cetacean-monitor/misc/001A-30s.wav"
 
 #capture waveform of signal
 audio_sig, sr = librosa.load(audio_test,sr=22050)

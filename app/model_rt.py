@@ -28,4 +28,11 @@ class Model:
         '''
         return self.model.predict(clip_data)
 
+    def evaluate(x_test,y_test,verbose):
+        '''
+        Accepts clip_data argument and uses module ML model
+        to evaluate accuracy
+        '''
+        return model.evaluate(x_test,y_test,verbose)
+
 model = Model()

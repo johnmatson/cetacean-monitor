@@ -3,12 +3,11 @@ import os
 import math
 import librosa
 
-DATASET_PATH = "app/data/datasets/main"
-JSON_PATH = "app/data/datasets/data.json"
+DATASET_PATH = "app/data/datasets/test/standard-plus20"
+JSON_PATH = "app/data/datasets/test/jsonfiles/standard-plus20.json"
 SAMPLE_RATE = 16000
 TRACK_DURATION = 1 # measured in seconds
 SAMPLES_PER_TRACK = SAMPLE_RATE * TRACK_DURATION
-
 
 def save_mfcc(dataset_path, json_path, num_mfcc=13, n_fft=2048, hop_length=512, num_segments=1):
     """Extracts MFCCs from dataset and saves them into a json file along with labels.

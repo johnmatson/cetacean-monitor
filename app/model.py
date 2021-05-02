@@ -9,6 +9,7 @@ import tensorflow as tf
 #config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 DATA_PATH = "app/data/datasets/data.json"
+JSON_PATH = "app/data/datasets/test/jsonfiles/standard-plus20.json"
 
 
 def load_data(data_path):
@@ -148,6 +149,10 @@ if __name__ == "__main__":
 
     #save the model
     model.save('./saved_model')
+
+    #load data
+    x_test, y_test = load_data(JSON_PATH)
+    x_test = x_test[...,np.newaxis]
 
     #evaluate the CNN on the test set
     test_error, test_accuracy = model.evaluate(x_test, y_test, verbose=1)
