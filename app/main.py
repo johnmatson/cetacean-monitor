@@ -1,7 +1,9 @@
 '''
-Call file from command line with a mode configuration argument of
-'DISK', 'STREAM', or 'MIC' or with no arguments to run in disk mode by
-default.
+Call file from command line with an argument of 'DISK', 'STREAM', or
+'MIC' to configure operating mode. Programs runs in 'DISK' mode by
+default. Program accepts an additional command line argument for the
+IPv4 address of the server, for 'STREAM' mode. By default, program uses
+the loopback address (127.0.0.1).
 '''
 
 
@@ -106,6 +108,9 @@ def read(clip_queue, event):
                     print(e)
                     break
 
+    if MODE == 'MIC':
+        pass
+
 
 def process(clip_queue, event):
     '''
@@ -137,6 +142,9 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 2:
         MODE = sys.argv[1]
+    elif len(sys.argv) == 3:
+        MODE = sys.argv[1]
+        HOST = sys.argv[2]
     
     pipeline = queue.Queue(maxsize=10) # input audio queue
     event = threading.Event() # exit event flag

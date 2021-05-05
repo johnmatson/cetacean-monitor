@@ -1,9 +1,9 @@
 '''
 Runs on the Raspberry Pi. Reads audio from external USB audio interface
 or audio file on disk. Establishes socket connection with remote client
-and streams audio over connection. Call file from command line with a
-mode configuration argument of 'DISK' or 'MIC' or with no arguments to
-run in disk mode by default.
+and streams audio over connection. Call file from command line with an
+argument of 'DISK' or 'MIC' to configure operating mode. Programs runs
+in 'DISK' mode by default.
 '''
 
 
@@ -26,7 +26,7 @@ MODE = 'DISK'
 
 AUDIO_PATH = 'app/data/full-clips/001A-short.wav'
 
-HOST = '127.0.0.1'
+HOST = ''
 PORT = 6829
 
 CHUNK = 1024*4
