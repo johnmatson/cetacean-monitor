@@ -16,6 +16,8 @@ import librosa
 import time
 import math
 import sys
+import numpy as np
+import scipy.signal as sps
 
 
 # MODE OPTIONS
@@ -29,10 +31,10 @@ AUDIO_PATH = 'app/data/full-clips/001A-short.wav'
 HOST = ''
 PORT = 6829
 
-CHUNK = 1024*4
 FORMAT = pyaudio.paFloat32
 CHANNELS = 1
 SAMPLE_RATE = 16000
+USB_SAMPLE_RATE = 48000
 DEVICE_INDEX = 2
 
 
@@ -48,7 +50,7 @@ def transmit():
         if MODE == 'DISK':
 
             print('Audio file laoding...')
-            audio_file, fs = librosa.load(AUDIO_PATH, sr=SAMPLE_RATE)
+            audio_file, fs = librosa.load(AUDIO_PATH, sr=USB_SAMPLE_RATE)
             print('Audio file loaded.')
 
             print('Server listening at',(HOST, PORT))
@@ -57,14 +59,14 @@ def transmit():
 
             end_time = time.time()
 
-            for i in range(math.floor(len(audio_file)/SAMPLE_RATE)):
+            for i in range(math.floor(len(audio_file)/USB_SAMPLE_RATE)):
 
                 if not client_socket:
                     break
 
                 # parse 1 second of audio to stream
-                start_sample = int(i*SAMPLE_RATE)
-                end_sample = int((i+1)*SAMPLE_RATE)
+                start_sample = int(i*USB_SAMPLE_RATE)
+                end_sample = int((i+1)*USB_SAMPLE_RATE)
                 data = audio_file[start_sample:end_sample]
 
                 # pack data for socket transmission
@@ -83,9 +85,9 @@ def transmit():
                 format=FORMAT,
                 channels=CHANNELS,
                 input_device_index=DEVICE_INDEX,
-                rate=SAMPLE_RATE,
+                rate=USB_SAMPLE_RATE,
                 input=True,
-                frames_per_buffer=CHUNK)
+                frames_per_buffer=SAMPLE_RATE)
 
             print('Server listening at',(HOST, PORT))
             client_socket,addr = server_socket.accept()
@@ -93,11 +95,10 @@ def transmit():
 
             while client_socket:
 
-                try:
-                    data = stream.read(CHUNK)
-                except Exception as e:
-                    print(e)
-                    data = '\x00' * CHUNK
+                # read, convert & resample bytes from audio stream
+                raw_data = stream.read(USB_SAMPLE_RATE, exception_on_overflow=False)
+                np_data = np.frombuffer(raw_data, dtype=np.float32)
+                data = sps.decimate(np_data, int(USB_SAMPLE_RATE/SAMPLE_RATE))
 
                 # pack data for socket transmission
                 a = pickle.dumps(data)
