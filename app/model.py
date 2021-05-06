@@ -125,10 +125,10 @@ def save_model(model):
     """
     # serialize model to JSON
     model_json = model.to_json()
-    with open("model.json", "w") as json_file:
+    with open("noisemodel.json", "w") as json_file:
         json_file.write(model_json)
     # serialize weights to HDF5
-    model.save_weights("model.h5")
+    model.save_weights("noisemodel.h5")
     print("Saved model to disk")
 
 
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     model.fit(x_train,y_train, validation_data=(x_valid,y_valid),batch_size =32, epochs=30)
 
     #save the model
-    model.save('./saved_model')
+    model.save('./saved_noisemodel')
 
     #load data
     x_test, y_test = load_data(JSON_PATH)
