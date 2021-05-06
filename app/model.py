@@ -8,8 +8,8 @@ import tensorflow as tf
 #assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
 #config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-DATA_PATH = "app/data/datasets/data.json"
-JSON_PATH = "app/data/datasets/test/jsonfiles/standard-plus20.json"
+DATA_PATH = "app/data/datasets/noisedata.json"
+JSON_PATH = "app/data/datasets/test/jsonfiles/standard-plus10.json"
 
 
 def load_data(data_path):
