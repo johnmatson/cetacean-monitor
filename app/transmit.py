@@ -33,6 +33,7 @@ CHUNK = 1024*4
 FORMAT = pyaudio.paFloat32
 CHANNELS = 1
 SAMPLE_RATE = 16000
+DEVICE_INDEX = 2
 
 
 def transmit():
@@ -81,6 +82,7 @@ def transmit():
             stream = p.open(
                 format=FORMAT,
                 channels=CHANNELS,
+                input_device_index=DEVICE_INDEX,
                 rate=SAMPLE_RATE,
                 input=True,
                 frames_per_buffer=CHUNK)
@@ -93,13 +95,14 @@ def transmit():
 
                 try:
                     data = stream.read(CHUNK)
-                    # print(data)
-                    # client_socket.sendall(stream.read(CHUNK))
                 except Exception as e:
                     print(e)
                     data = '\x00' * CHUNK
 
-                client_socket.sendall(data)
+                # pack data for socket transmission
+                a = pickle.dumps(data)
+                message = struct.pack("Q",len(a))+a
+                client_socket.sendall(message)
 
 
 if __name__ == "__main__":

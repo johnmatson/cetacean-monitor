@@ -119,9 +119,7 @@ def process(clip_queue, event):
     makes a prediction. Exits when 'event' is set.
     '''
 
-    print('CNN model loading...')
     model = keras.models.load_model(MODEL_PATH)
-    print('CNN model loaded.')
 
     while not event.is_set() or not clip_queue.empty():
 
