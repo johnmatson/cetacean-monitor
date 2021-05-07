@@ -41,6 +41,10 @@ HOP_LENGTH = 512
 HOST = '127.0.0.1'
 PORT = 6829
 
+# output smoothing filter weights, should sum to 1
+X_WEIGHTS = np.array([0.2, 0.2, 0.2, 0.2])
+Y_WEIGHTS = np.array([0.2])
+
 
 def read(clip_queue, event):
     '''
@@ -121,6 +125,12 @@ def process(clip_queue, event):
 
     model = keras.models.load_model(MODEL_PATH)
 
+    # prediction filter input and output buffers
+    x = np.full(len(X_WEIGHTS), 0.0)
+    y = np.full(len(Y_WEIGHTS), 0.0)
+
+    alert = [False] * 4
+
     while not event.is_set() or not clip_queue.empty():
 
         # extract mfcc
@@ -133,7 +143,24 @@ def process(clip_queue, event):
 
         # make prediction using CNN
         prediction = model.predict(mfcc_stage3)
-        print(np.argmax(prediction, axis=1))
+
+        # apply smoothing filter to model output
+        x = np.roll(x, 1)
+        x[0] = prediction[0][0]
+        y[0] = np.sum(x * X_WEIGHTS) + np.sum(y * Y_WEIGHTS)
+
+        # alert level assignment
+        alert = [False] * 4
+        if y[0] > 0.7:
+            alert[:] = [True] * 4
+        elif y[0] > 0.5:
+            alert[:3] = [True] * 3
+        elif y[0] > 0.3:
+            alert[:2] = [True] * 2
+        elif y[0] > 0.1:
+            alert[0] = True
+
+        print(prediction, x, y, alert)
 
 
 if __name__ == '__main__':
