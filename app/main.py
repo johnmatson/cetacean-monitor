@@ -21,6 +21,8 @@ import librosa
 import numpy as np
 import tensorflow.keras as keras
 from sklearn.model_selection import train_test_split
+from PyQt5.QtWidgets import QApplication
+from interface import AlertUI
 
 
 # MODE OPTIONS
@@ -116,7 +118,7 @@ def read(clip_queue, event):
         pass
 
 
-def process(clip_queue, event):
+def process(clip_queue, predict_pipe, alert_pipe, new_data, event):
     '''
     Processes audio data from 'clip_queue' as soon as it is available.
     MFCC is calculated for each audio clip, which is fed to CNN, which
@@ -160,7 +162,11 @@ def process(clip_queue, event):
         elif y[0] > 0.1:
             alert[0] = True
 
-        print(prediction, x, y, alert)
+        # print(prediction, x, y, alert)
+        predict_pipe.put(prediction)
+        alert_pipe.put(alert)
+        new_data.set()
+
 
 
 if __name__ == '__main__':
@@ -170,15 +176,24 @@ if __name__ == '__main__':
     elif len(sys.argv) == 3:
         MODE = sys.argv[1]
         HOST = sys.argv[2]
-    
-    pipeline = queue.Queue(maxsize=10) # input audio queue
+
+    audio_pipe = queue.Queue(maxsize=10) # input audio queue
+    predict_pipe = queue.Queue(maxsize=10)
+    alert_pipe = queue.Queue(maxsize=10)
+
+    update_event = threading.Event()
     event = threading.Event() # exit event flag
 
     try:
         # run read() & process() concurrently
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-        executor.submit(read, pipeline, event)
-        executor.submit(process, pipeline, event)
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
+        executor.submit(read, audio_pipe, event)
+        executor.submit(process, audio_pipe, predict_pipe, alert_pipe, update_event, event)
+
+        app = QApplication(sys.argv)
+        win = AlertUI(update_event, predict_pipe, alert_pipe)
+        app.exec()
+        event.set()
 
     except KeyboardInterrupt:
         event.set()
