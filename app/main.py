@@ -81,7 +81,7 @@ def read(clip_queue, event):
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
 
-            client_socket.connect((HOST, PORT)) 
+            client_socket.connect((HOST, PORT))
             print("Connected to server",(HOST, PORT))
 
             data = b""
@@ -131,7 +131,7 @@ def process(clip_queue, predict_pipe, alert_pipe, new_data, event):
     x = np.full(len(X_WEIGHTS), 0.0)
     y = np.full(len(Y_WEIGHTS), 0.0)
 
-    alert = [False] * 4
+    # alert = [False] * 4
 
     while not event.is_set() or not clip_queue.empty():
 
@@ -152,15 +152,16 @@ def process(clip_queue, predict_pipe, alert_pipe, new_data, event):
         y[0] = np.sum(x * X_WEIGHTS) + np.sum(y * Y_WEIGHTS)
 
         # alert level assignment
-        alert = [False] * 4
-        if y[0] > 0.7:
-            alert[:] = [True] * 4
-        elif y[0] > 0.5:
-            alert[:3] = [True] * 3
-        elif y[0] > 0.3:
-            alert[:2] = [True] * 2
-        elif y[0] > 0.1:
-            alert[0] = True
+        # alert = [False] * 4
+        # if y[0] > 0.7:
+        #     alert[:] = [True] * 4
+        # elif y[0] > 0.5:
+        #     alert[:3] = [True] * 3
+        # elif y[0] > 0.3:
+        #     alert[:2] = [True] * 2
+        # elif y[0] > 0.1:
+        #     alert[0] = True
+        alert = y[0]
 
         # print(prediction, x, y, alert)
         predict_pipe.put(prediction)
