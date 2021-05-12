@@ -9,7 +9,7 @@ import tensorflow as tf
 #config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 DATA_PATH = "app/data/datasets/noisedata.json"
-JSON_PATH = "app/data/datasets/test/jsonfiles/boat2-minus10.json"
+JSON_PATH = "app/data/datasets/test/jsonfiles/boat2-minus20.json"
 
 def load_data(data_path):
     """
