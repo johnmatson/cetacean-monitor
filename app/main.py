@@ -44,15 +44,15 @@ HOST = '127.0.0.1'
 PORT = 6829
 
 # output smoothing filter weights, should sum to 1
-X_WEIGHTS = np.array([0.2, 0.2, 0.2, 0.2])
-Y_WEIGHTS = np.array([0.2])
+X_WEIGHTS = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
+Y_WEIGHTS = np.array([0])
 
 
-def read(clip_queue, event):
+def read(audio_pipe, exit_event):
     '''
     Continuously reads data from either DISK, STREAM or MIC. Adds audio
-    data to 'clip_queue' FIFO pipeline in 1-second segments. Exits when
-    'event' is set.
+    data to 'audio_pipe' FIFO pipeline in 1-second segments. Exits when
+    'exit_event' is set.
     '''
 
     if MODE == 'DISK':
@@ -68,9 +68,9 @@ def read(clip_queue, event):
             # add 1 second of audio to the queue
             start_sample = int(i*SAMPLE_RATE)
             end_sample = int((i+1)*SAMPLE_RATE)
-            clip_queue.put(audio_file[start_sample:end_sample])
+            audio_pipe.put(audio_file[start_sample:end_sample])
 
-            if event.is_set():
+            if exit_event.is_set():
                 break
 
             # sleep remainder of 1-second cycle
@@ -87,7 +87,7 @@ def read(clip_queue, event):
             data = b""
             payload_size = struct.calcsize("Q")
 
-            while not event.is_set():
+            while not exit_event.is_set():
                 
                 try:
                     while len(data) < payload_size:
@@ -108,7 +108,7 @@ def read(clip_queue, event):
 
                     if len(frame) >= SAMPLE_RATE:
                         x = np.array(frame[:SAMPLE_RATE])
-                        clip_queue.put(x)
+                        audio_pipe.put(x)
 
                 except Exception as e:
                     print(e)
@@ -118,11 +118,11 @@ def read(clip_queue, event):
         pass
 
 
-def process(clip_queue, predict_pipe, alert_pipe, new_data, event):
+def process(audio_pipe, predict_pipe, alert_pipe, update_event, exit_event):
     '''
-    Processes audio data from 'clip_queue' as soon as it is available.
+    Processes audio data from 'audio_pipe' as soon as it is available.
     MFCC is calculated for each audio clip, which is fed to CNN, which
-    makes a prediction. Exits when 'event' is set.
+    makes a prediction. Exits when 'exit_event' is set.
     '''
 
     model = keras.models.load_model(MODEL_PATH)
@@ -133,10 +133,10 @@ def process(clip_queue, predict_pipe, alert_pipe, new_data, event):
 
     # alert = [False] * 4
 
-    while not event.is_set() or not clip_queue.empty():
+    while not exit_event.is_set() or not audio_pipe.empty():
 
         # extract mfcc
-        clip = clip_queue.get()
+        clip = audio_pipe.get()
         mfcc_stage1 = librosa.feature.mfcc(
             clip, SAMPLE_RATE, n_mfcc=NUM_MFCC,n_fft=NUM_FFT,
             hop_length=HOP_LENGTH)
@@ -166,16 +166,16 @@ def process(clip_queue, predict_pipe, alert_pipe, new_data, event):
         # print(prediction, x, y, alert)
         predict_pipe.put(prediction)
         alert_pipe.put(alert)
-        new_data.set()
+        update_event.set()
 
 
 
 if __name__ == '__main__':
 
     if len(sys.argv) == 2:
-        MODE = sys.argv[1]
+        MODE = sys.argv[1].upper()
     elif len(sys.argv) == 3:
-        MODE = sys.argv[1]
+        MODE = sys.argv[1].upper()
         HOST = sys.argv[2]
 
     audio_pipe = queue.Queue(maxsize=10) # input audio queue
@@ -183,18 +183,18 @@ if __name__ == '__main__':
     alert_pipe = queue.Queue(maxsize=10)
 
     update_event = threading.Event()
-    event = threading.Event() # exit event flag
+    exit_event = threading.Event() # exit event flag
 
     try:
         # run read() & process() concurrently
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
-        executor.submit(read, audio_pipe, event)
-        executor.submit(process, audio_pipe, predict_pipe, alert_pipe, update_event, event)
+        executor.submit(read, audio_pipe, exit_event)
+        executor.submit(process, audio_pipe, predict_pipe, alert_pipe, update_event, exit_event)
 
         app = QApplication(sys.argv)
         win = AlertUI(update_event, predict_pipe, alert_pipe)
         app.exec()
-        event.set()
+        exit_event.set()
 
     except KeyboardInterrupt:
-        event.set()
+        exit_event.set()

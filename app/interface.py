@@ -1,6 +1,7 @@
 import sys
-import queue
 import time
+import queue
+import threading
 
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -8,7 +9,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QObject
 from PyQt5.QtCore import QThread
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QDialog
 from PyQt5.QtWidgets import QGridLayout
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QMainWindow
@@ -37,11 +38,13 @@ class AlertWorker(QObject):
             else:
                 time.sleep(0.2)
 
+
 class AlertUI(QMainWindow):
 
     def __init__(self, update_event, predict_pipe, alert_pipe):
         super().__init__()
         self.setWindowTitle('Whale Alert')
+        self.setFixedSize(400,600)
         self.general_layout = QVBoxLayout()
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
@@ -52,6 +55,8 @@ class AlertUI(QMainWindow):
         self.create_risk_indicator()
         self.create_buttons()
         self.create_status_bar()
+
+        self.connect_button.clicked.connect(self.connect_menu)
 
         # self.update_status_bar('status2')
 
@@ -69,11 +74,10 @@ class AlertUI(QMainWindow):
 
     def create_header(self):
         self.header = QLabel('<h1>Orca Detection</h1>')
-        self.header.setAlignment(Qt.AlignCenter)
-        self.general_layout.addWidget(self.header)
+        self.general_layout.addWidget(self.header, alignment=Qt.AlignCenter)
 
     def create_model_output(self):
-        self.model_label = QLabel('<h2>Neurel network output</h2>')
+        self.model_label = QLabel('<h2>Neural network output</h2>')
         self.general_layout.addWidget(self.model_label)
 
         self.model_layout = QGridLayout()
@@ -106,16 +110,16 @@ class AlertUI(QMainWindow):
         self.bar.setOutlinePenWidth(3)
         self.bar.setDonutThicknessRatio(0.85)
         self.bar.setDecimals(1)
-        self.bar.setFormat('  %p %  ')
+        self.bar.setFormat('Risk:\n  %p %  ')
         # self.bar.resetFormat()
         self.bar.setNullPosition(270)
         self.bar.setBarStyle(QRoundProgressBar.StyleDonut)
-        self.bar.setDataColors([(0., QtGui.QColor.fromRgb(0,255,0)), (0.5, QtGui.QColor.fromRgb(255,255,0)), (1., QtGui.QColor.fromRgb(255,0,0))])
+        self.bar.setDataColors([(0., QtGui.QColor.fromRgb(0,255,0)), (0.2, QtGui.QColor.fromRgb(255,255,0)), (0.7, QtGui.QColor.fromRgb(255,0,0))])
 
         self.bar.setRange(0, 100)
         self.bar.setValue(0)
 
-        self.general_layout.addWidget(self.bar)
+        self.general_layout.addWidget(self.bar, alignment=Qt.AlignCenter)
 
     def create_status_bar(self):
         self.status = QStatusBar()
@@ -126,10 +130,14 @@ class AlertUI(QMainWindow):
 
     def create_buttons(self):
         self.buttons_layout = QHBoxLayout()
-        self.connect = QPushButton('Connect')
-        self.disconnect = QPushButton('Disconnect')
-        self.buttons_layout.addWidget(self.disconnect)
-        self.buttons_layout.addWidget(self.connect)
+        self.connect_button = QPushButton('Connect')
+        self.disconnect_button = QPushButton('Disconnect')
+        self.connect_button.setMaximumSize(self.disconnect_button.minimumSizeHint())
+        self.disconnect_button.setMaximumSize(self.disconnect_button.minimumSizeHint())
+        self.disconnect_button.setEnabled(False)
+        # self.connect_button.setDefault(True)
+        self.buttons_layout.addWidget(self.disconnect_button)
+        self.buttons_layout.addWidget(self.connect_button)
         self.general_layout.addLayout(self.buttons_layout)
 
     def update_display(self):
@@ -141,6 +149,31 @@ class AlertUI(QMainWindow):
 
         alert = self.alert_pipe.get()
         self.bar.setValue(100*alert)
+
+    def connect_menu(self):
+        self.dialog = ConnectUI()
+        self.dialog.show()
+
+
+class ConnectUI(QDialog):
+
+    def __init__(self, parent=AlertUI):
+        super().__init__()
+        self.setWindowTitle('Connection Setup')
+        self.general_layout = QVBoxLayout()
+
+        self.stream = QPushButton('Stream')
+        self.mic = QPushButton('Mic')
+        self.disk = QPushButton('Disk')
+        self.disk.setDefault(True)
+
+        self.stream.clicked.connect()
+
+        self.general_layout.addWidget(self.stream)
+        self.general_layout.addWidget(self.mic)
+        self.general_layout.addWidget(self.disk)
+
+        self.setLayout(self.general_layout)
 
 
 class QRoundProgressBar(QWidget):
@@ -424,7 +457,11 @@ class QRoundProgressBar(QWidget):
 
 
 if __name__ == '__main__':
+    update_event = threading.Event()
+    predict_pipe = queue.Queue(maxsize=10)
+    alert_pipe = queue.Queue(maxsize=10)
+
     app = QApplication(sys.argv)
-    win = AlertUI()
+    win = AlertUI(update_event, predict_pipe, alert_pipe)
     sys.exit(app.exec())
     

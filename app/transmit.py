@@ -109,6 +109,6 @@ def transmit():
 if __name__ == "__main__":
 
     if len(sys.argv) == 2:
-        MODE = sys.argv[1]
+        MODE = sys.argv[1].upper()
         
     transmit()
