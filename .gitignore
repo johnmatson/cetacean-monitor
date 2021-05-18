@@ -1,3 +1,4 @@
 workspace.code-workspace
 settings.json
 test.py
+__pycache__/
