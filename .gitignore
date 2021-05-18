@@ -2,3 +2,4 @@ workspace.code-workspace
 settings.json
 test.py
 __pycache__/
+.DS_Store
