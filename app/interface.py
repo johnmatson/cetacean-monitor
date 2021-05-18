@@ -1,3 +1,8 @@
+'''
+Specifies the Orca Alert GUI. Built using the PyQt5 framework.
+'''
+
+
 import sys
 import time
 import queue
@@ -23,6 +28,10 @@ from PyQt5.QtWidgets import QLabel
 
 
 class AlertWorker(QObject):
+    '''
+    Worker thread for AlertUI. Checks status of update_event every
+    200 ms to emit a signal if new data is ready to be displayed.
+    '''
 
     update = pyqtSignal()
 
@@ -40,8 +49,13 @@ class AlertWorker(QObject):
 
 
 class AlertUI(QMainWindow):
+    '''
+    AlertUI main window. Displays raw output of CNN model, filtered orca
+    output in the form of a 0-100% risk indicator, connect and
+    disconnect option buttons, and app status in the status bar.
+    '''
 
-    def __init__(self, update_event, predict_pipe, alert_pipe):
+    def __init__(self, update_event, predict_pipe, risk_pipe):
         super().__init__()
         self.setWindowTitle('Whale Alert')
         self.setFixedSize(400,600)
@@ -61,7 +75,7 @@ class AlertUI(QMainWindow):
         # self.update_status_bar('status2')
 
         self.predict_pipe = predict_pipe
-        self.alert_pipe = alert_pipe
+        self.risk_pipe = risk_pipe
 
         self.thread = QThread()
         self.worker = AlertWorker(update_event)
@@ -134,7 +148,7 @@ class AlertUI(QMainWindow):
         self.disconnect_button = QPushButton('Disconnect')
         self.connect_button.setMaximumSize(self.disconnect_button.minimumSizeHint())
         self.disconnect_button.setMaximumSize(self.disconnect_button.minimumSizeHint())
-        self.disconnect_button.setEnabled(False)
+        # self.disconnect_button.setEnabled(False)
         # self.connect_button.setDefault(True)
         self.buttons_layout.addWidget(self.disconnect_button)
         self.buttons_layout.addWidget(self.connect_button)
@@ -147,8 +161,8 @@ class AlertUI(QMainWindow):
         self.speech.setText('{:2.1%}'.format(prediction[0][2]))
         self.water.setText('{:2.1%}'.format(prediction[0][3]))
 
-        alert = self.alert_pipe.get()
-        self.bar.setValue(100*alert)
+        risk = self.risk_pipe.get()
+        self.bar.setValue(100*risk)
 
     def connect_menu(self):
         self.dialog = ConnectUI()
@@ -156,6 +170,10 @@ class AlertUI(QMainWindow):
 
 
 class ConnectUI(QDialog):
+    '''
+    Dialog element used to specify the operating mode of AlertUI during
+    connection setup.
+    '''
 
     def __init__(self, parent=AlertUI):
         super().__init__()
@@ -177,6 +195,14 @@ class ConnectUI(QDialog):
 
 
 class QRoundProgressBar(QWidget):
+    '''
+    A circular PyQt progress bar, based heavily on code from Alexander
+    Lutsenko, available here:
+    https://stackoverflow.com/questions/33577068/any-pyqt-circular-progress-bar
+    which is a ported adaption of QRoundProgressBar for Qt, created by
+    Sintegrial Technologies and available here:
+    https://sourceforge.net/projects/qroundprogressbar/
+    '''
 
     StyleDonut = 1
     StylePie = 2
@@ -459,9 +485,9 @@ class QRoundProgressBar(QWidget):
 if __name__ == '__main__':
     update_event = threading.Event()
     predict_pipe = queue.Queue(maxsize=10)
-    alert_pipe = queue.Queue(maxsize=10)
+    risk_pipe = queue.Queue(maxsize=10)
 
     app = QApplication(sys.argv)
-    win = AlertUI(update_event, predict_pipe, alert_pipe)
+    win = AlertUI(update_event, predict_pipe, risk_pipe)
     sys.exit(app.exec())
     

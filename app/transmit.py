@@ -1,9 +1,9 @@
 '''
-Runs on the Raspberry Pi. Reads audio from external USB audio interface
-or audio file on disk. Establishes socket connection with remote client
-and streams audio over connection. Call file from command line with an
-argument of 'DISK' or 'MIC' to configure operating mode. Programs runs
-in 'DISK' mode by default.
+Designed to run on the Raspberry Pi. Reads audio from external USB audio
+interface or audio file on disk. Establishes socket connection with
+remote client and streams audio over connection. Call file from command
+line with an argument of 'DISK' or 'MIC' to configure operating mode.
+Programs runs in 'DISK' mode by default.
 '''
 
 
@@ -40,17 +40,23 @@ DEVICE_INDEX = 2
 
 def transmit():
     '''
+    Establishes socket server and transmits audio to client 1-second at
+    a time. If MODE is set to 'DISK', audio is sourced from local audio
+    file with sleep statements inserted to simulate real-time
+    transmission. If MODE is set to 'MIC', audio is sourced instead
+    from device audio card; program tested with the Focusrite Scarlett
+    2i2 audio interface.
     '''
     
+    # accept connection from socket client
     with socket.socket() as server_socket:
-
         server_socket.bind((HOST, PORT))
         server_socket.listen()
 
         if MODE == 'DISK':
 
             print('Audio file laoding...')
-            audio_file, fs = librosa.load(AUDIO_PATH, sr=USB_SAMPLE_RATE)
+            audio_file, fs = librosa.load(AUDIO_PATH, sr=SAMPLE_RATE)
             print('Audio file loaded.')
 
             print('Server listening at',(HOST, PORT))
@@ -59,14 +65,14 @@ def transmit():
 
             end_time = time.time()
 
-            for i in range(math.floor(len(audio_file)/USB_SAMPLE_RATE)):
+            for i in range(math.floor(len(audio_file)/SAMPLE_RATE)):
 
                 if not client_socket:
                     break
 
                 # parse 1 second of audio to stream
-                start_sample = int(i*USB_SAMPLE_RATE)
-                end_sample = int((i+1)*USB_SAMPLE_RATE)
+                start_sample = int(i*SAMPLE_RATE)
+                end_sample = int((i+1)*SAMPLE_RATE)
                 data = audio_file[start_sample:end_sample]
 
                 # pack data for socket transmission
@@ -108,6 +114,7 @@ def transmit():
 
 if __name__ == "__main__":
 
+    # get MODE argument
     if len(sys.argv) == 2:
         MODE = sys.argv[1].upper()
         

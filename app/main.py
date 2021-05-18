@@ -1,4 +1,11 @@
 '''
+Designed to run on the data-processing PC. Program establishes audio
+read (audio source dependant on MODE argument), audio processing – using
+CNN model, and user interface – as specified in interface.py. Audio is
+read and processed concurrently using a queue system, while the GUI
+updates the display with a risk indicator based on the filtered CNN
+model predictions.
+
 Call file from command line with an argument of 'DISK', 'STREAM', or
 'MIC' to configure operating mode. Programs runs in 'DISK' mode by
 default. Program accepts an additional command line argument for the
@@ -42,10 +49,11 @@ HOP_LENGTH = 512
 
 HOST = '127.0.0.1'
 PORT = 6829
+CHUNK = 1024 * 4
 
 # output smoothing filter weights, should sum to 1
-X_WEIGHTS = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
-Y_WEIGHTS = np.array([0])
+X_WEIGHTS = np.array([0.2, 0.2, 0.2, 0.2])
+Y_WEIGHTS = np.array([0.2])
 
 
 def read(audio_pipe, exit_event):
@@ -79,33 +87,38 @@ def read(audio_pipe, exit_event):
 
     if MODE == 'STREAM':
 
+        # establish connection to socket server
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-
             client_socket.connect((HOST, PORT))
-            print("Connected to server",(HOST, PORT))
+            print('Connected to server',(HOST, PORT))
 
-            data = b""
-            payload_size = struct.calcsize("Q")
+            data = b''
+            payload_size = struct.calcsize('Q')
 
             while not exit_event.is_set():
                 
                 try:
+                    # recieve payload_size number of bytes
                     while len(data) < payload_size:
-                        packet = client_socket.recv(4*1024) # 4K
+                        packet = client_socket.recv(CHUNK)
                         if not packet: break
                         data+=packet
                         
+                    # unpack bytes to determine message size
                     packed_msg_size = data[:payload_size]
                     data = data[payload_size:]
-                    msg_size = struct.unpack("Q",packed_msg_size)[0]
+                    msg_size = struct.unpack('Q',packed_msg_size)[0]
 
+                    # recieve remainder of message if neccesary
                     while len(data) < msg_size:
-                        data += client_socket.recv(4*1024)
+                        data += client_socket.recv(CHUNK)
 
+                    # de-serialize data from stream
                     frame_data = data[:msg_size]
                     data  = data[msg_size:]
                     frame = pickle.loads(frame_data)
 
+                    # write 1 second of audio to queue
                     if len(frame) >= SAMPLE_RATE:
                         x = np.array(frame[:SAMPLE_RATE])
                         audio_pipe.put(x)
@@ -118,20 +131,19 @@ def read(audio_pipe, exit_event):
         pass
 
 
-def process(audio_pipe, predict_pipe, alert_pipe, update_event, exit_event):
+def process(audio_pipe, predict_pipe, risk_pipe, update_event, exit_event):
     '''
     Processes audio data from 'audio_pipe' as soon as it is available.
     MFCC is calculated for each audio clip, which is fed to CNN, which
     makes a prediction. Exits when 'exit_event' is set.
     '''
 
+    # load CNN
     model = keras.models.load_model(MODEL_PATH)
 
     # prediction filter input and output buffers
     x = np.full(len(X_WEIGHTS), 0.0)
     y = np.full(len(Y_WEIGHTS), 0.0)
-
-    # alert = [False] * 4
 
     while not exit_event.is_set() or not audio_pipe.empty():
 
@@ -150,50 +162,44 @@ def process(audio_pipe, predict_pipe, alert_pipe, update_event, exit_event):
         x = np.roll(x, 1)
         x[0] = prediction[0][0]
         y[0] = np.sum(x * X_WEIGHTS) + np.sum(y * Y_WEIGHTS)
+        risk = y[0]
 
-        # alert level assignment
-        # alert = [False] * 4
-        # if y[0] > 0.7:
-        #     alert[:] = [True] * 4
-        # elif y[0] > 0.5:
-        #     alert[:3] = [True] * 3
-        # elif y[0] > 0.3:
-        #     alert[:2] = [True] * 2
-        # elif y[0] > 0.1:
-        #     alert[0] = True
-        alert = y[0]
-
-        # print(prediction, x, y, alert)
+        # send data to GUI
         predict_pipe.put(prediction)
-        alert_pipe.put(alert)
+        risk_pipe.put(risk)
         update_event.set()
-
 
 
 if __name__ == '__main__':
 
+    # get MODE argument
     if len(sys.argv) == 2:
         MODE = sys.argv[1].upper()
+
+    # get server IPv4 address argument
     elif len(sys.argv) == 3:
         MODE = sys.argv[1].upper()
         HOST = sys.argv[2]
 
     audio_pipe = queue.Queue(maxsize=10) # input audio queue
-    predict_pipe = queue.Queue(maxsize=10)
-    alert_pipe = queue.Queue(maxsize=10)
+    predict_pipe = queue.Queue(maxsize=10) # output model prediction queue
+    risk_pipe = queue.Queue(maxsize=10) # output risk indicator queue
 
-    update_event = threading.Event()
-    exit_event = threading.Event() # exit event flag
+    update_event = threading.Event() # update display event flag
+    exit_event = threading.Event() # exit program event flag
 
     try:
         # run read() & process() concurrently
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
         executor.submit(read, audio_pipe, exit_event)
-        executor.submit(process, audio_pipe, predict_pipe, alert_pipe, update_event, exit_event)
+        executor.submit(process, audio_pipe, predict_pipe, risk_pipe, update_event, exit_event)
 
+        # load user interface
         app = QApplication(sys.argv)
-        win = AlertUI(update_event, predict_pipe, alert_pipe)
+        win = AlertUI(update_event, predict_pipe, risk_pipe)
         app.exec()
+
+        # set exit flag once GUI is closed (after app.exec() returns)
         exit_event.set()
 
     except KeyboardInterrupt:

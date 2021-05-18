@@ -1,3 +1,14 @@
+'''
+Performs the requisite processing to take a labeled dataset from a
+directory, extract Mel Frequency Cepstral Coefficients, and save dataset
+to a single JSON file to be used for ML-model training.
+
+Based heavily on code by Valerio Velardo from episode 12 of his Deep
+Learning (for Audio) with Python series. Available here:
+https://github.com/musikalkemist/DeepLearningForAudioWithPython
+'''
+
+
 import json
 import os
 import math

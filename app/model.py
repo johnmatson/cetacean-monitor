@@ -1,3 +1,15 @@
+'''
+Using a JSON-formatted audio dataset (created using prepro.py) this
+script segments the dataset into training, validation and testing sets,
+then builds, compiles, trains, evaluates and finally saves a
+convolutional neural network for audio classification.
+
+Based heavily on code by Valerio Velardo from episode 16 of his Deep
+Learning (for Audio) with Python series. Available here:
+https://github.com/musikalkemist/DeepLearningForAudioWithPython
+'''
+
+
 import json
 import numpy as np
 from sklearn.model_selection import train_test_split
