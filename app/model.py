@@ -21,6 +21,7 @@ import tensorflow as tf
 #config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
 DATA_PATH = "app/data/datasets/data.json"
+MODEL_PATH = 'app/models/model1'
 
 
 def load_data(data_path):
@@ -159,7 +160,7 @@ if __name__ == "__main__":
     model.fit(x_train,y_train, validation_data=(x_valid,y_valid),batch_size =32, epochs=30)
 
     #save the model
-    model.save('./saved_model')
+    model.save(MODEL_PATH)
 
     #evaluate the CNN on the test set
     test_error, test_accuracy = model.evaluate(x_test, y_test, verbose=1)
@@ -169,6 +170,6 @@ if __name__ == "__main__":
     x = x_test[100]
     y = y_test[100]
 
-    save_model(model)
+    # save_model(model)
 
     predict(model, x, y)
