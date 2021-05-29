@@ -40,7 +40,7 @@ from interface import AlertUI
 MODE = 'DISK'
 
 AUDIO_PATH = 'app/data/full-clips/001A-short.wav'
-MODEL_PATH = 'app/saved_model'
+MODEL_PATH = 'app/models/model3-noise'
 
 SAMPLE_RATE = 16000
 NUM_MFCC = 13

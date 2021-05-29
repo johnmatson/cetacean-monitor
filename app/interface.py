@@ -44,8 +44,8 @@ class AlertWorker(QObject):
             if self.update_event.is_set():
                 self.update_event.clear()
                 self.update.emit()
-            else:
-                time.sleep(0.2)
+                
+            time.sleep(0.2)
 
 
 class AlertUI(QMainWindow):
